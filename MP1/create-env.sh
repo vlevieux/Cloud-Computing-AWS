@@ -62,20 +62,21 @@ for INDEX in `seq 1 $COUNT`;
 do
 	aws ec2 create-volume --size 10 --availability-zone $AVAILABILITY_ZONE
 done
-VOLUME_IDS=($(aws ec2 describe-volumes --filters "Name=size,Values=10" --query "Volumes[*].VolumeId" --output=text))
+VOLUMES[0]=$(aws ec2 describe-volumes --filters Name=size,Values=10 --query 'Volumes[0].VolumeId' --ouput=text)
+VOLUMES[1]=$(aws ec2 describe-volumes --filters Name=size,Values=10 --query 'Volumes[1].VolumeId' --ouput=text)
+VOLUMES[2]=$(aws ec2 describe-volumes --filters Name=size,Values=10 --query 'Volumes[2].VolumeId' --ouput=text)
 echo "Waiting for instance running..."
 aws ec2 wait instance-running --instance-ids ${INSTANCE_IDS}
 
 echo "Attaching volume..."
-let "COUNT--"
-for INDEX in `seq 0 $COUNT`;
+for (( I=0; I<$COUNT; I++))
 do
-	aws ec2 attach-volume --volume-id ${VOLUME_IDS[INDEX]} --instance-id ${INSTANCE_IDS_ARRAY[INDEX]} --device /dev/xvdh
+   aws ec2 attach-volume --device /dev/xvdh --instance-id ${INSTANCE_IDS_ARRAY[$I]} --volume-id ${VOLUME_ID[$I]}
 done
 echo "Done."
 
 echo "====BACKEND===="
-aws ec2 run-instances --image-id $IMAGE_ID --count 1  --instance-type t2.micro --key-name $KEY_NAME --security-groups $SECURITY_GROUP --iam-instance-profile Name=instance-full-access --user-data file://create-app-backend.sh
+aws ec2 run-instances --image-id $IMAGE_ID --count 1  --instance-type t2.micro --key-name $KEY_NAME --security-groups-ids $SECURITY_GROUP --iam-instance-profile Name=instance-full-access --user-data file://create-app-backend.sh
 echo "Done."
 
 echo "====LoadBalancer===="
