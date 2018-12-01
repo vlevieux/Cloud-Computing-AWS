@@ -100,10 +100,9 @@ aws s3api put-bucket-acl --bucket $S3_BUCKET_NAME --acl public-read
 echo "Done."
 
 echo "====RDS Database===="
-aws rds create-db-instance --db-name dbvlevieux --allocated-storage 10 --db-instance-class db.m1.small --db-instance-identifier $DB_ID --engine mysql --master-username $DB_USERNAME --master-user-password $DB_PASSWORD --availability-zone $AVAILABILITY_ZONE
+aws rds create-db-instance --db-name dbvlevieux --allocated-storage 10 --db-instance-class db.m1.small --db-instance-identifier $DB_ID --engine mysql --master-username $DB_USERNAME --master-user-password $DB_PASSWORD --availability-zone $AVAILABILITY_ZONE --vpc-security-group-ids vpc-fe9d4f84
 echo "Waiting Database..."
 aws rds wait db-instance-available --db-instance-identifier $DB_ID
-aws rds authorize-db-security-group-ingress --db-security-group-name default --ec2-security-group-id $SECURITY_GROUP
 SERVER_NAME=$(aws rds describe-db-instances --db-instance-identifier $DB_ID --query 'DBInstances[0].Endpoint.Address')
 echo "Initialize the database..."
 php db-init.php $SERVER_NAME $DB_USERNAME $DB_PASSWORD dbvlevieux
