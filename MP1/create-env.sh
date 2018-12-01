@@ -47,6 +47,8 @@ done
 echo "$IMAGE_ID $KEY_NAME $SECURITY_GROUP $COUNT $ELB_NAME $S3_BUCKET_NAME"
 
 echo "Creating instance profile..."
+aws iam create-instance-profile --instance-profile-name instance-full-access
+echo "Adding role to instance profile..."
 aws iam add-role-to-instance-profile --instance-profile-name instance-full-access --role-name $IAM_PROFILE
 echo "Done."
 
