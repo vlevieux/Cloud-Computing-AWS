@@ -101,7 +101,7 @@ echo "====RDS Database===="
 aws rds create-db-instance --allocated-storage 10 --db-instance-class db.m1.small --db-instance-identifier $DB_ID --engine mysql --master-username $DB_USERNAME --master-user-password $DB_PASSWORD --availability-zone $AVAILABILITY_ZONE
 echo "Waiting Database..."
 aws rds wait db-instance-available --db-instance-identifier $DB_ID
-SERVER_NAME=$(aws rds describe-db-instances --db-instance-identifier $DB_ID --query 'DBInstances[0].Endpoint[0].Address')
+SERVER_NAME=$(aws rds describe-db-instances --db-instance-identifier $DB_ID --query 'DBInstances[0].Endpoint.Address')
 echo "Initialize the database..."
 php db-init.php $SERVER_NAME $DB_USERNAME $DB_PASSWORD $DB_ID
 echo "Done."
