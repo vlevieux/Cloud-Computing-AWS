@@ -103,6 +103,8 @@ echo "====RDS Database===="
 aws rds create-db-instance --db-name dbvlevieux --allocated-storage 10 --db-instance-class db.m1.small --db-instance-identifier $DB_ID --engine mysql --master-username $DB_USERNAME --master-user-password $DB_PASSWORD --availability-zone $AVAILABILITY_ZONE
 echo "Waiting Database..."
 aws rds wait db-instance-available --db-instance-identifier $DB_ID
+DB_SECURITY_GROUP_NAME=$(aws rds describe-db-instance --db-instance-dentifier $DB_ID --query "DBInstances[*].DBSecurityGroups[*].DBSecurityGroupName[0]" --output=text)
+aws rds authorize-db-security-group-ingress --db-securty-group-name $DB_SECURITY_GROUP_NAME
 SERVER_NAME=$(aws rds describe-db-instances --db-instance-identifier $DB_ID --query 'DBInstances[0].Endpoint.Address')
 echo "Initialize the database..."
 php db-init.php $SERVER_NAME $DB_USERNAME $DB_PASSWORD dbvlevieux
