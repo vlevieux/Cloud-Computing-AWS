@@ -104,7 +104,7 @@ aws rds create-db-instance --db-name dbvlevieux --allocated-storage 10 --db-inst
 echo "Waiting Database..."
 aws rds wait db-instance-available --db-instance-identifier $DB_ID
 DB_SECURITY_GROUP_NAME=$(aws rds describe-db-instances --db-instance-dentifier $DB_ID --query "DBInstances[*].DBSecurityGroups[*].DBSecurityGroupName[0]" --output=text)
-aws rds authorize-db-security-group-ingress --db-securty-group-name $DB_SECURITY_GROUP_NAME
+aws rds authorize-db-security-group-ingress --db-securty-group-name $DB_SECURITY_GROUP_NAME --ec2-security-group-id $SECURITY_GROUP
 SERVER_NAME=$(aws rds describe-db-instances --db-instance-identifier $DB_ID --query 'DBInstances[0].Endpoint.Address')
 echo "Initialize the database..."
 php db-init.php $SERVER_NAME $DB_USERNAME $DB_PASSWORD dbvlevieux
