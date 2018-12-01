@@ -62,9 +62,9 @@ for INDEX in `seq 1 $COUNT`;
 do
 	aws ec2 create-volume --size 10 --availability-zone $AVAILABILITY_ZONE
 done
-VOLUME_ID[0]=$(aws ec2 describe-volumes --filters Name=size,Values=10 --query 'Volumes[0].VolumeId')
-VOLUME_ID[1]=$(aws ec2 describe-volumes --filters Name=size,Values=10 --query 'Volumes[1].VolumeId')
-VOLUME_ID[2]=$(aws ec2 describe-volumes --filters Name=size,Values=10 --query 'Volumes[2].VolumeId')
+VOLUME_ID[0]=$(aws ec2 describe-volumes --filters Name=size,Values=10 --query 'Volumes[0].VolumeId' --output=text)
+VOLUME_ID[1]=$(aws ec2 describe-volumes --filters Name=size,Values=10 --query 'Volumes[1].VolumeId' --output=text)
+VOLUME_ID[2]=$(aws ec2 describe-volumes --filters Name=size,Values=10 --query 'Volumes[2].VolumeId' --output=text)
 echo "Waiting for instance running..."
 aws ec2 wait instance-running --instance-ids ${INSTANCE_IDS}
 
