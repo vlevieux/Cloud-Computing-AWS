@@ -26,7 +26,7 @@ sudo php composer-setup.php --quiet
 sudo php -d memory_limit=-1 composer.phar require aws/aws-sdk-php 1>> /home/ubuntu/out.log 2>> /home/ubuntu/err.log
 
 # move vendor to /home/ubuntu
-# sudo mv vendor/ /home/ubuntu
+sudo mv vendor/ /home/ubuntu
 
 su - ubuntu -l -c "git clone git@github.com:illinoistech-itm/vlevieux.git"  1>> /home/ubuntu/out.log 2>> /home/ubuntu/err.log
 
