@@ -62,16 +62,15 @@ for INDEX in `seq 1 $COUNT`;
 do
 	aws ec2 create-volume --size 10 --availability-zone $AVAILABILITY_ZONE
 done
-VOLUME_ID[0]=$(aws ec2 describe-volumes --filters Name=size,Values=10 --query 'Volumes[0].VolumeId' --output=text)
-VOLUME_ID[1]=$(aws ec2 describe-volumes --filters Name=size,Values=10 --query 'Volumes[1].VolumeId' --output=text)
-VOLUME_ID[2]=$(aws ec2 describe-volumes --filters Name=size,Values=10 --query 'Volumes[2].VolumeId' --output=text)
+VOLUME_IDS=($(aws ec2 describe-volumes --filters "Name=size,Values=10" --query "Volumes[*].VolumeId" --output=text))
 echo "Waiting for instance running..."
 aws ec2 wait instance-running --instance-ids ${INSTANCE_IDS}
 
 echo "Attaching volume..."
-for (( I=0; I<$COUNT; I++))
+let "COUNT--"
+for INDEX in `seq 0 $COUNT`;
 do
-   aws ec2 attach-volume --device /dev/xvdh --instance-id ${INSTANCE_IDS_ARRAY[$I]} --volume-id ${VOLUME_ID[$I]}
+	aws ec2 attach-volume --volume-id ${VOLUME_IDS[INDEX]} --instance-id ${INSTANCE_IDS_ARRAY[INDEX]} --device /dev/xvdh
 done
 echo "Done."
 
