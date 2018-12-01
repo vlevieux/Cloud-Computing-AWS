@@ -6,6 +6,10 @@ IMAGE_ID="ami-01c178ad2a57b96cb"
 SECURITY_GROUP="sg-0e929342eb43226a6"
 KEY_NAME="devenv-key"
 S3_BUCKET_NAME="bucket-name"
+IAM_PROFILE = "basic-role"
+DB_ID=vlevieux_db
+DB_USERNAME=victor
+DB_PASSWORD=test1234
 
 while [ -n "$1" ]
 do
@@ -42,26 +46,69 @@ do
 done
 echo "$IMAGE_ID $KEY_NAME $SECURITY_GROUP $COUNT $ELB_NAME $S3_BUCKET_NAME"
 
+echo "Creating instance profile..."
+aws iam add-role-to-instance-profile --instance-profile-name instance-full-access --role-name basic-role
+echo "Done."
+
+echo "====FRONTEND===="
 INSTANCE_IDS=$(aws ec2 run-instances --image-id $IMAGE_ID --security-group-ids $SECURITY_GROUP --count $COUNT --instance-type t2.micro --key-name $KEY_NAME --user-data file://create-app.sh --query 'Instances[*].InstanceId' --output=text)
 INSTANCE_IDS_ARRAY=($INSTANCE_IDS)
 
+echo "Creating volumes..."
 for INDEX in `seq 1 $COUNT`;
 do
 	aws ec2 create-volume --size 10 --availability-zone $AVAILABILITY_ZONE
 done
-
 VOLUME_IDS=($(aws ec2 describe-volumes --filters "Name=size,Values=10" --query "Volumes[*].VolumeId" --output=text))
-
+echo "Waiting for instance running..."
 aws ec2 wait instance-running --instance-ids ${INSTANCE_IDS}
 
+echo "Attaching volume..."
 let "COUNT--"
 for INDEX in `seq 0 $COUNT`;
 do
 	aws ec2 attach-volume --volume-id ${VOLUME_IDS[INDEX]} --instance-id ${INSTANCE_IDS_ARRAY[INDEX]} --device /dev/xvdh
 done
+echo "Done."
 
+echo "====BACKEND===="
+aws ec2 run-instances --image-id $IMAGE_ID --count 1  --instance-type t2.micro --key-name $KEY_NAME --security-groups $SECURITY_GROUP --iam-instance-profile Name=instance-full-access --user-data file://create-app-2.sh
+echo "Done."
+
+echo "====LoadBalancer===="
+echo "Creating load balancer..."
 aws elb create-load-balancer --load-balancer-name $ELB_NAME --listeners "Protocol=HTTP,LoadBalancerPort=80,InstanceProtocol=HTTP,InstancePort=80" --availability-zone $AVAILABILITY_ZONE
+echo "LoadBalancer : HTTP:80"
 
+echo "Creating cookie stickiness policy..."
 aws elb create-lb-cookie-stickiness-policy --load-balancer-name $ELB_NAME --policy-name myPolicy
 
+echo "Registering instances with load balancer..."
 aws elb register-instances-with-load-balancer --load-balancer-name $ELB_NAME --instances $INSTANCE_IDS
+echo "Done."
+
+echo "====S3 Bucket===="
+aws s3api create-bucket --bucket $S3_BUCKET_NAME --create-bucket-configuration LocationConstraint=us-west-2
+echo "Waiting the bucket"
+aws s3api wait bucket-exists --bucket $S3_BUCKET_NAME
+aws s3api put-bucket-acl --bucket $S3_BUCKET_NAME --acl public-read
+echo "Done."
+
+echo "====RDS Database===="
+aws rds create-db-instance --allocated-storage 10 --db-instance-class db.m1.small --db-instance-identifier $DB_ID --engine mysql --master-username $DB_USERNAME --master-user-password $DB_PASSWORD --availability-zone $Availability_Zone
+echo "Waiting Database..."
+aws rds wait db-instance-available --db-instance-identifier $DB_ID
+$SERVER_NAME=$(aws rds describe-db-instances --db-instance-identifier $DB_ID --query 'DBInstances[0].Endpoint[0].Address')
+echo "Initialize the database..."
+php db-init.php $SERVER_NAME $DB_USERNAME $DB_PASSWORD $DB_ID
+echo "Done."
+
+echo "====SQS Topic===="
+aws sqs create-queue --queue-name inclass-sqs-queue
+echo "Done."
+
+echo "====SNS Topic===="
+aws sns create-topic --name inclass-sns-topic
+echo "Done."
+
+echo "Finished."
