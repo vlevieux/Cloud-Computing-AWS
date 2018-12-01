@@ -103,6 +103,11 @@ echo "====RDS Database===="
 aws rds create-db-instance --db-name dbvlevieux --allocated-storage 10 --db-instance-class db.m1.small --db-instance-identifier $DB_ID --engine mysql --master-username $DB_USERNAME --master-user-password $DB_PASSWORD --availability-zone $AVAILABILITY_ZONE --vpc-security-group-ids vpc-fe9d4f84
 echo "Waiting Database..."
 aws rds wait db-instance-available --db-instance-identifier $DB_ID
+echo "Getting Owner ID..."
+OWNER_ID=$(aws ec2 describe-security-groups --filter Name=group-id,Values=sg-0e929342eb43226a6 --query "SecurityGroups[*].OwnerId" --output=text)
+echo "Authorizing ec2 to access DB..."
+aws rds authorize-db-security-group-ingress --db-security-group-name db-security --ec2-security-group-id $SECURITY_GROUP --ec2-security-group-owner-id $OWNER_ID
+echo "Getting server name..."
 SERVER_NAME=$(aws rds describe-db-instances --db-instance-identifier $DB_ID --query 'DBInstances[0].Endpoint.Address')
 echo "Initialize the database..."
 php db-init.php $SERVER_NAME $DB_USERNAME $DB_PASSWORD dbvlevieux
