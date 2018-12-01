@@ -7,9 +7,9 @@ SECURITY_GROUP="sg-0e929342eb43226a6"
 KEY_NAME="devenv-key"
 S3_BUCKET_NAME="vlevieuxmp21"
 IAM_PROFILE="basic-role"
-DB_ID=vlevieuxdb
-DB_USERNAME=victor
-DB_PASSWORD=test1234
+DB_ID="vlevieuxdb"
+DB_USERNAME="victor"
+DB_PASSWORD="test1234"
 
 while [ -n "$1" ]
 do
