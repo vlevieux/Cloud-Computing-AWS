@@ -54,7 +54,7 @@ echo "Done."
 
 echo "====FRONTEND===="
 echo "Creating instances..."
-INSTANCE_IDS=$(aws ec2 run-instances --image-id $IMAGE_ID --security-group-ids $SECURITY_GROUP --placement AvailabilityZone=$AVAILABILITY_ZONE --count $COUNT --instance-type t2.micro --key-name $KEY_NAME --user-data file://create-app-frontend.sh --query 'Instances[*].InstanceId' --output=text)
+INSTANCE_IDS=$(aws ec2 run-instances --image-id $IMAGE_ID --security-group-ids $SECURITY_GROUP -iam-instance-profile Name=instance-full-access --placement AvailabilityZone=$AVAILABILITY_ZONE --count $COUNT --instance-type t2.micro --key-name $KEY_NAME --user-data file://create-app-frontend.sh --query 'Instances[*].InstanceId' --output=text)
 INSTANCE_IDS_ARRAY=($INSTANCE_IDS)
 echo ${INSTANCE_IDS_ARRAY[@]}
 
@@ -77,7 +77,7 @@ done
 echo "Done."
 
 echo "====BACKEND===="
-aws ec2 run-instances --image-id $IMAGE_ID --count 1  --instance-type t2.micro --key-name $KEY_NAME --placement AvailabilityZone=$AVAILABILITY_ZONE --security-group-ids $SECURITY_GROUP --iam-instance-profile Name=instance-full-access --user-data file://create-app-backend.sh
+aws ec2 run-instances --image-id $IMAGE_ID -iam-instance-profile Name=instance-full-access --count 1  --instance-type t2.micro --key-name $KEY_NAME --placement AvailabilityZone=$AVAILABILITY_ZONE --security-group-ids $SECURITY_GROUP --iam-instance-profile Name=instance-full-access --user-data file://create-app-backend.sh
 echo "Done."
 
 echo "====LoadBalancer===="
