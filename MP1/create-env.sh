@@ -75,7 +75,7 @@ done
 echo "Done."
 
 echo "====BACKEND===="
-aws ec2 run-instances --image-id $IMAGE_ID --count 1  --instance-type t2.micro --key-name $KEY_NAME --security-groups-ids $SECURITY_GROUP --iam-instance-profile Name=instance-full-access --user-data file://create-app-backend.sh
+aws ec2 run-instances --image-id $IMAGE_ID --count 1  --instance-type t2.micro --key-name $KEY_NAME --security-group-ids $SECURITY_GROUP --iam-instance-profile Name=instance-full-access --user-data file://create-app-backend.sh
 echo "Done."
 
 echo "====LoadBalancer===="
