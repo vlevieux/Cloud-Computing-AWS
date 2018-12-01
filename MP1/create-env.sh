@@ -55,7 +55,7 @@ echo "Done."
 echo "====FRONTEND===="
 echo "Creating instances..."
 INSTANCE_IDS=$(aws ec2 run-instances --image-id $IMAGE_ID --security-group-ids $SECURITY_GROUP --count $COUNT --instance-type t2.micro --key-name $KEY_NAME --user-data file://create-app-frontend.sh --query 'Instances[*].InstanceId' --output=text)
-INSTANCE_IDS_ARRAY=("$INSTANCE_IDS")
+INSTANCE_IDS_ARRAY=($INSTANCE_IDS)
 
 echo "Creating volumes..."
 for INDEX in `seq 1 $COUNT`;
