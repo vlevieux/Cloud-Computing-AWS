@@ -5,9 +5,9 @@ COUNT="3"
 IMAGE_ID="ami-01c178ad2a57b96cb"
 SECURITY_GROUP="sg-0e929342eb43226a6"
 KEY_NAME="devenv-key"
-S3_BUCKET_NAME="bucket-name"
+S3_BUCKET_NAME="vlevieuxmp21"
 IAM_PROFILE="basic-role"
-DB_ID=vlevieux_db
+DB_ID=vlevieuxdb
 DB_USERNAME=victor
 DB_PASSWORD=test1234
 
