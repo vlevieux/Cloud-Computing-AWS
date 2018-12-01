@@ -56,6 +56,7 @@ echo "====FRONTEND===="
 echo "Creating instances..."
 INSTANCE_IDS=$(aws ec2 run-instances --image-id $IMAGE_ID --security-group-ids $SECURITY_GROUP --placement AvailabilityZone=$AVAILABILITY_ZONE --count $COUNT --instance-type t2.micro --key-name $KEY_NAME --user-data file://create-app-frontend.sh --query 'Instances[*].InstanceId' --output=text)
 INSTANCE_IDS_ARRAY=($INSTANCE_IDS)
+echo ${INSTANCE_IDS_ARRAY[@]}
 
 echo "Creating volumes..."
 for INDEX in `seq 1 $COUNT`;
@@ -63,6 +64,7 @@ do
 	aws ec2 create-volume --size 10 --availability-zone $AVAILABILITY_ZONE
 done
 VOLUME_IDS=($(aws ec2 describe-volumes --filters "Name=size,Values=10" --query "Volumes[*].VolumeId" --output=text))
+echo ${VOLUME_IDS[@]}
 echo "Waiting for instance running..."
 aws ec2 wait instance-running --instance-ids ${INSTANCE_IDS}
 
