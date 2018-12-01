@@ -61,13 +61,13 @@ do
 done
 VOLUME_IDS=($(aws ec2 describe-volumes --filters "Name=size,Values=10" --query "Volumes[*].VolumeId" --output=text))
 echo "Waiting for instance running..."
-aws ec2 wait instance-running --instance-ids "${INSTANCE_IDS}"
+aws ec2 wait instance-running --instance-ids ${INSTANCE_IDS}
 
 echo "Attaching volume..."
 ((COUNT--))
 for INDEX in $(seq 0 "$COUNT");
 do
-	aws ec2 attach-volume --volume-id "${VOLUME_IDS[INDEX]}" --instance-id "${INSTANCE_IDS_ARRAY[INDEX]}" --device /dev/xvdh
+	aws ec2 attach-volume --volume-id ${VOLUME_IDS[INDEX]} --instance-id ${INSTANCE_IDS_ARRAY[INDEX]} --device /dev/xvdh
 done
 echo "Done."
 
