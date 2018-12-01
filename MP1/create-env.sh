@@ -58,7 +58,7 @@ INSTANCE_IDS=$(aws ec2 run-instances --image-id $IMAGE_ID --security-group-ids $
 INSTANCE_IDS_ARRAY=("$INSTANCE_IDS")
 
 echo "Creating volumes..."
-for INDEX in $(seq 1 "$COUNT");
+for INDEX in $(seq 1 $COUNT);
 do
 	aws ec2 create-volume --size 10 --availability-zone $AVAILABILITY_ZONE
 done
@@ -68,7 +68,7 @@ aws ec2 wait instance-running --instance-ids ${INSTANCE_IDS}
 
 echo "Attaching volume..."
 ((COUNT--))
-for INDEX in $(seq 0 "$COUNT");
+for INDEX in $(seq 0 $COUNT);
 do
 	aws ec2 attach-volume --volume-id ${VOLUME_IDS[INDEX]} --instance-id ${INSTANCE_IDS_ARRAY[INDEX]} --device /dev/xvdh
 done
