@@ -8,6 +8,7 @@ KEY_NAME="devenv-key"
 S3_BUCKET_NAME="vlevieuxmp21"
 IAM_PROFILE="basic-role"
 DB_ID="vlevieuxdb"
+DB_NAME="dbvlevieux"
 DB_USERNAME="victor"
 DB_PASSWORD="test1234"
 
@@ -100,13 +101,13 @@ aws s3api put-bucket-acl --bucket $S3_BUCKET_NAME --acl public-read
 echo "Done."
 
 echo "====RDS Database===="
-aws rds create-db-instance --db-name dbvlevieux --allocated-storage 10 --db-instance-class db.m1.small --db-instance-identifier $DB_ID --engine mysql --master-username $DB_USERNAME --master-user-password $DB_PASSWORD --availability-zone $AVAILABILITY_ZONE
+aws rds create-db-instance --db-name $DB_NAME --allocated-storage 10 --db-instance-class db.m1.small --db-instance-identifier $DB_ID --engine mysql --master-username $DB_USERNAME --master-user-password $DB_PASSWORD --availability-zone $AVAILABILITY_ZONE
 echo "Waiting Database..."
 aws rds wait db-instance-available --db-instance-identifier $DB_ID
 echo "Getting server name..."
 SERVER_NAME=$(aws rds describe-db-instances --db-instance-identifier $DB_ID --query 'DBInstances[0].Endpoint.Address')
 echo "Initialize the database..."
-php db-init.php $SERVER_NAME $DB_USERNAME $DB_PASSWORD dbvlevieux
+php db-init.php $SERVER_NAME $DB_USERNAME $DB_PASSWORD $DB_NAME
 echo "Done."
 
 echo "====SQS Topic===="
