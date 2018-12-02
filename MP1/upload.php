@@ -28,16 +28,11 @@ $user_phone = $_POST['user_phone'];
 if (isset($_FILES['user_image'])) {
 	$aExtraInfo = getimagesize($_FILES['user_image']['tmp_name']);
 	$sImage = "data:" . $aExtraInfo["mime"] . ";base64," . base64_encode(file_get_contents($_FILES['user_image']['tmp_name']));
-	echo '<p>The image has been uploaded successfully</p><p>Preview:</p><img src="'.$sImage.'" alt="Your Image" />';
 	$fileName = $_FILES['user_image']['name'];
 	$s3_raw_url = sendToBucket($fileName, $sImage, $S3);
 	$receipt_handle = sendToSQS($fileName, $SQS);
 	insertIntoDB($receipt_handle, $user_name, $user_email, $user_phone, $s3_raw_url, $RDS);
-	//publish to a topic
-        /*$result = $sns->publish([
-		 'Message' => 'Items have been uploaded', 
-                 'TopicArn' => 'arn:aws:sns:us-east-1:964874203517:inclass-sns-topic',
-	]);*/
+	include "upload.html";
 }
 
 function sendToSQS($fileName, $SQS){
@@ -52,7 +47,6 @@ function sendToSQS($fileName, $SQS){
 	try {
 		$result = $SQS->sendMessage($params);
 		$receipt_handle = $result['MessageId'];
-		var_dump($result);
 	} catch (AwsException $e) {
 	    // output error message if fails
 	    error_log($e->getMessage());
@@ -71,7 +65,6 @@ function sendToBucket($fileName, $sImage, $S3) {
                 'Body' =>  $rawImage,
         ]);
 
-        echo "<br />The object URL is: ";
         $s3_raw_url = $s3_object['ObjectURL'];
 	return $s3_raw_url;
 }
@@ -87,11 +80,11 @@ function insertIntoDB($receipt_handle, $user_name, $user_email, $user_phone, $s3
     		$conn = new PDO($dsn, $username, $password);
     		// set the PDO error mode to exception
     		$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    		echo "Connected successfully"; 
-    	}
+  	}
 	catch(PDOException $e)
     	{
-    		echo "Connection failed: " . $e->getMessage();
+		include "upload-fail.html";
+		exit();
     	}
 	$sql = "INSERT INTO Image_Processing(uuid_receipt,username,email,phone, s3_raw_url,job_status) VALUES ('$receipt_handle', '$user_name', '$user_email', '$user_phone', '$s3_raw_url','0')";
 	$conn->exec($sql);
