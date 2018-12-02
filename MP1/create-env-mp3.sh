@@ -8,6 +8,50 @@ AVAILABILITY_ZONE="us-east-1a"
 DB_ID_READ="replica-db"
 DB_ID_WRITE="vlevieuxdb"
 
+while [ -n "$1" ]
+do
+	  case "$1" in
+		"--image-id")
+			AMI="$2"
+			shift 2
+			;;
+		"--key-name")
+			KEY_NAME="$2"
+			shift 2
+			;;
+		"--security-group")
+			SECURITY_GROUP="$2"
+			shift 2
+			;;
+		"--db-replica-id")
+			DB_ID_READ="$2"
+			shift 2
+			;;
+		"--db-instance_id")
+			DB_ID_WRITE="$2"
+			shift 2
+			;;
+		"--availability_zone")
+			AVAILABILITY_ZONE="$2"
+			shift 2
+			;;
+		"--elb-name")
+			LOAD_BALANCER_NAME="$2"
+			shift 2
+			;;
+		"--iam-profile")
+			IAM_PROFILE="$2"
+			shift 2
+			;;
+		*)
+			echo "$1 is not a valid argument."
+			exit
+			;;
+  esac
+done
+
+echo "====MP3===="
+
 echo "Create launch-configuration... "
 aws autoscaling create-launch-configuration \
         --launch-configuration-name basic-launch-configuration \
@@ -43,3 +87,5 @@ echo "Done."
 echo "Waiting db instance available... "
 aws rds wait db-instance-available --db-instance-identifier $DB_ID_READ
 echo "Done."
+
+echo "====Finished===="
