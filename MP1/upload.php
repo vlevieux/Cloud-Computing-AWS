@@ -34,6 +34,12 @@ if (isset($_FILES['user_image'])) {
 	echo '<p>The image has been uploaded successfully</p><p>Preview:</p><img src="'.$sImage.'" alt="Your Image" />';
 	$fileName = $_FILES['user_image']['name'];
 	sendToBucket($fileName, $sImage, $S3);
+	//publish to a topic
+        $result = $sns->publish([
+		 'Message' => 'Items have been uploaded', 
+                 'TopicArn' => 'arn:aws:sns:us-east-1:964874203517:inclass-sns-topic',
+	]);
+
 }
 
 function sendToBucket($fileName, $sImage, $S3) {
