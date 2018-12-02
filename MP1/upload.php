@@ -29,26 +29,26 @@ echo $_POST['user_phone'];
 echo "\n";
 
 if (isset($_FILES['user_image'])) {
-    $aExtraInfo = getimagesize($_FILES['user_image']['tmp_name']);
-    $sImage = "data:" . $aExtraInfo["mime"] . ";base64," . base64_encode(file_get_contents($_FILES['user_image']['tmp_name']));
-    echo '<p>The image has been uploaded successfully</p><p>Preview:</p><img src="'.$sImage.'" alt="Your Image" />';
-    $fileName = $_FILES['user_image']['name'];
+	$aExtraInfo = getimagesize($_FILES['user_image']['tmp_name']);
+	$sImage = "data:" . $aExtraInfo["mime"] . ";base64," . base64_encode(file_get_contents($_FILES['user_image']['tmp_name']));
+	echo '<p>The image has been uploaded successfully</p><p>Preview:</p><img src="'.$sImage.'" alt="Your Image" />';
+	$fileName = $_FILES['user_image']['name'];
+	sendToBucket($fileName, $sImage, $S3);
+}
 
+function sendToBucket($fileName, $sImage, $S3) {
 	$s3_list_bucket = $S3->listBuckets([]);
-	echo "The bucket name :";
-	$s3_bucket_name = $s3_list_bucket['Buckets'][0]['Name'];
-	echo $s3_bucket_name . "<br />";
+        $s3_bucket_name = $s3_list_bucket['Buckets'][0]['Name'];
+        $rawImage = base64_decode(end(explode(",", $sImage)));
+        $s3_object = $S3->putObject([
+                'ACL' => 'public-read',
+                'Bucket' => $s3_bucket_name,
+                'Key' => $fileName,
+                'Body' =>  $rawImage,
+        ]);
 
-	$rawImage = base64_decode(end(explode(",", $sImage)));
-	$s3_object = $S3->putObject([
-	        'ACL' => 'public-read',
-        	'Bucket' => $s3_bucket_name,
-        	'Key' => $fileName,
-        	'Body' =>  $rawImage,
-	]);
-
-	echo "<br />The object URL is: ";
-	$s3_raw_url = $s3_object['ObjectURL'];
+        echo "<br />The object URL is: ";
+        $s3_raw_url = $s3_object['ObjectURL'];
 	echo $s3_raw_url;
 }
 
