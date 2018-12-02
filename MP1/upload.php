@@ -33,7 +33,7 @@ if (isset($_FILES['user_image'])) {
 	$sImage = "data:" . $aExtraInfo["mime"] . ";base64," . base64_encode(file_get_contents($_FILES['user_image']['tmp_name']));
 	echo '<p>The image has been uploaded successfully</p><p>Preview:</p><img src="'.$sImage.'" alt="Your Image" />';
 	$fileName = $_FILES['user_image']['name'];
-	$s3bucketurl = sendToBucket($fileName, $sImage, $S3);
+	$s3_raw_url = sendToBucket($fileName, $sImage, $S3);
 	//publish to a topic
         $result = $sns->publish([
 		 'Message' => 'Items have been uploaded', 
@@ -54,8 +54,8 @@ function sendToBucket($fileName, $sImage, $S3) {
         ]);
 
         echo "<br />The object URL is: ";
-        return $s3_raw_url = $s3_object['ObjectURL'];
-	echo $s3_raw_url;
+        $s3_raw_url = $s3_object['ObjectURL'];
+	return $s3_raw_url;
 }
 
 function openConnection() {
