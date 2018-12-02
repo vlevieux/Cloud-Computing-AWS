@@ -34,7 +34,7 @@ echo "Remove the empty S3 buckets"
 aws s3api delete-bucket  --bucket $VAR4
 
 echo "Destroy Database"
-VAR6=$(aws rds describe-db-instances --query 'DBInstances[*].DBInstanceIdentifier[*]' --output=text)
+VAR6=$(aws rds describe-db-instances --query 'DBInstances[*].DBInstanceIdentifier' --output=text)
 aws rds delete-db-instance --db-instance-identifier $VAR6 --skip-final-snapshot
 
 echo "Destroy SQS Topic"
