@@ -19,6 +19,7 @@ sudo mv vendor/ /home/ubuntu
 su - ubuntu -l -c "git clone git@github.com:illinoistech-itm/vlevieux.git"  1>> /home/ubuntu/out.log 2>> /home/ubuntu/err.log
 
 sudo cp /home/ubuntu/vlevieux/itmd-544/MP2/*.php /var/www/html/
+sudo cp /home/ubuntu/vlevieux/itmd-544/MP2/*.html /var/www/html/
 sudo rm /var/www/html/index.html
 
 sudo systemctl reload apache2
