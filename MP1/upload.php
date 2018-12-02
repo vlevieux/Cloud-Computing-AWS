@@ -52,7 +52,7 @@ function sendToSQS($fileName, $SQS){
 	];
 
 	try {
-	    $result = $client->sendMessage($params);
+	    $result = $SQS->sendMessage($params);
 	    var_dump($result);
 	} catch (AwsException $e) {
 	    // output error message if fails
