@@ -21,12 +21,9 @@ $RDS = new Aws\Rds\RdsClient([
     'region' => 'us-east-1'
 ]);
 
-echo $_POST['user_name'];
-echo "\n";
-echo $_POST['user_email'];
-echo "\n";
-echo $_POST['user_phone'];
-echo "\n";
+$user_name = $_POST['user_name'];
+$user_email = $_POST['user_email'];
+$user_phone = $_POST['user_phone'];
 
 if (isset($_FILES['user_image'])) {
 	$aExtraInfo = getimagesize($_FILES['user_image']['tmp_name']);
@@ -96,7 +93,7 @@ function insertIntoDB($receipt_handle, $user_name, $user_email, $user_phone, $s3
     	{
     		echo "Connection failed: " . $e->getMessage();
     	}
-	$sql = "INSERT INTO Image_Processing(uuid-receipt,username,email,phone, s3-raw-url,job-status) VALUES ('$receipt_handle', '$user_name', '$user_email', '$user_phone', '$s3_raw_url','0')";
+	$sql = "INSERT INTO Image_Processing(uuid_receipt,username,email,phone, s3_raw_url,job_status) VALUES ('$receipt_handle', '$user_name', '$user_email', '$user_phone', '$s3_raw_url','0')";
 	$conn->exec($sql);
 	$conn=null;
 }
