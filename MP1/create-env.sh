@@ -93,7 +93,7 @@ aws elb register-instances-with-load-balancer --load-balancer-name $ELB_NAME --i
 echo "Done."
 
 echo "====S3 Bucket===="
-aws s3api create-bucket --bucket $S3_BUCKET_NAME --create-bucket-configuration LocationConstraint=us-west-2
+aws s3api create-bucket --bucket $S3_BUCKET_NAME --create-bucket-configuration LocationConstraint=us-east-1
 echo "Waiting the bucket"
 aws s3api wait bucket-exists --bucket $S3_BUCKET_NAME
 aws s3api put-bucket-acl --bucket $S3_BUCKET_NAME --acl public-read
