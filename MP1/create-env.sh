@@ -105,7 +105,7 @@ aws rds create-db-instance --db-name $DB_NAME --allocated-storage 10 --db-instan
 echo "Waiting Database..."
 aws rds wait db-instance-available --db-instance-identifier $DB_ID
 echo "Getting server name..."
-SERVER_NAME=$(aws rds describe-db-instances --db-instance-identifier $DB_ID --query 'DBInstances[0].Endpoint.Address')
+SERVER_NAME=$(aws rds describe-db-instances --db-instance-identifier $DB_ID --query 'DBInstances[0].Endpoint.Address' --output=text)
 echo "Initialize the database..."
 php db-init.php $SERVER_NAME $DB_USERNAME $DB_PASSWORD $DB_NAME
 echo "Done."
