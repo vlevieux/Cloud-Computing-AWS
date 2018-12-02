@@ -8,7 +8,7 @@ use Aws\Rds\RdsClient;
 //New S3 Client
 $S3 = new Aws\S3\S3Client([
    'version' => 'latest',
-   'region' => 'us-east-1'
+   'region' => 'us-west-2'
 ]);
 // New SQS Client
 $SQS = new Aws\Sqs\SqsClient([
@@ -39,15 +39,17 @@ if (isset($_FILES['user_image'])) {
 	$s3_bucket_name = $s3_list_bucket['Buckets'][0]['Name'];
 	echo $s3_bucket_name . "<br />";
 
+	$rawImage = base64_decode(end(explode(",", $sImage)));
 	$s3_object = $S3->putObject([
 	        'ACL' => 'public-read',
         	'Bucket' => $s3_bucket_name,
         	'Key' => $fileName,
-        	'Body' =>  $sImage,
+        	'Body' =>  $rawImage,
 	]);
 
 	echo "<br />The object URL is: ";
 	$s3_raw_url = $s3_object['ObjectURL'];
+	echo $s3_raw_url;
 }
 
 function openConnection() {
