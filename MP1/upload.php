@@ -34,7 +34,8 @@ if (isset($_FILES['user_image'])) {
 	echo '<p>The image has been uploaded successfully</p><p>Preview:</p><img src="'.$sImage.'" alt="Your Image" />';
 	$fileName = $_FILES['user_image']['name'];
 	$s3_raw_url = sendToBucket($fileName, $sImage, $S3);
-	sendToSQS($fileName, $SQS);
+	$receipt_handle = sendToSQS($fileName, $SQS);
+	insertIntoDB($receipt_handle, $user_name, $user_email, $user_phone, $s3_raw_url, $RDS);
 	//publish to a topic
         /*$result = $sns->publish([
 		 'Message' => 'Items have been uploaded', 
@@ -52,12 +53,14 @@ function sendToSQS($fileName, $SQS){
 	];
 
 	try {
-	    $result = $SQS->sendMessage($params);
-	    var_dump($result);
+		$result = $SQS->sendMessage($params);
+		$receipt_handle = $result['MessageId'];
+		var_dump($result);
 	} catch (AwsException $e) {
 	    // output error message if fails
 	    error_log($e->getMessage());
 	}
+	return $receipt_handle;
 }
 
 function sendToBucket($fileName, $sImage, $S3) {
@@ -76,24 +79,26 @@ function sendToBucket($fileName, $sImage, $S3) {
 	return $s3_raw_url;
 }
 
-function openConnection() {
-        $servername = "vlevieuxdb.cv18wjykhbpt.us-east-1.rds.amazonaws.com";
-        $username = "victor";
-        $password = "test1234";
-	$dbname = "dbvlevieux";
-        // Create connection
-        $conn = new mysqli($servername, $username, $password,$dbname);
-        // Check connection
-        if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-        }
-        echo "Connection successful";
-
-        return $conn;
-}
-
-function closeConnection($conn) {
-        $conn->close();
+function insertIntoDB($receipt_handle, $user_name, $user_email, $user_phone, $s3_raw_url, $RDS) {
+	$result = $RDS->describeDBInstances([]);
+	$servername = $result['DBInstances'][0]['Endpoint']['Address'];
+	$username = $result['DBInstances'][0]['MasterUsername'];
+	$dbname = $result['DBInstances'][0]['DBName'];
+	$password = "test1234";
+        $dsn="mysql:host={$servername};port=3306;dbname={$dbname}";
+	try {
+    		$conn = new PDO($dsn, $username, $password);
+    		// set the PDO error mode to exception
+    		$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    		echo "Connected successfully"; 
+    	}
+	catch(PDOException $e)
+    	{
+    		echo "Connection failed: " . $e->getMessage();
+    	}
+	$sql = "INSERT INTO Image_Processing(uuid-receipt,username,email,phone, s3-raw-url,job-status) VALUES ('$receipt_handle', '$user_name', '$user_email', '$user_phone', '$s3_raw_url','0')";
+	$conn->exec($sql);
+	$conn=null;
 }
 
 ?>
