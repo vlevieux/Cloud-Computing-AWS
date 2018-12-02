@@ -62,9 +62,9 @@ function openConnection() {
         $servername = "vlevieuxdb.cv18wjykhbpt.us-east-1.rds.amazonaws.com";
         $username = "victor";
         $password = "test1234";
-
+	$dbname = "dbvlevieux";
         // Create connection
-        $conn = new mysqli($servername, $username, $password);
+        $conn = new mysqli($servername, $username, $password,$dbname);
         // Check connection
         if ($conn->connect_error) {
         die("Connection failed: " . $conn->connect_error);
