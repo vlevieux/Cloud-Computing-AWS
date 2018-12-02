@@ -34,12 +34,30 @@ if (isset($_FILES['user_image'])) {
 	echo '<p>The image has been uploaded successfully</p><p>Preview:</p><img src="'.$sImage.'" alt="Your Image" />';
 	$fileName = $_FILES['user_image']['name'];
 	$s3_raw_url = sendToBucket($fileName, $sImage, $S3);
+	sendToSQS($fileName, $SQS);
 	//publish to a topic
-        $result = $sns->publish([
+        /*$result = $sns->publish([
 		 'Message' => 'Items have been uploaded', 
                  'TopicArn' => 'arn:aws:sns:us-east-1:964874203517:inclass-sns-topic',
-	]);
+	]);*/
+}
 
+function sendToSQS($fileName, $SQS){
+	$list_result = $SQS->listQueues([]);
+	$sqs_url = $list_result['QueueUrls'][0];
+	$params = [
+	    'DelaySeconds' => 10,
+	    'MessageBody' => $fileName,
+	    'QueueUrl' => $sqs_url
+	];
+
+	try {
+	    $result = $client->sendMessage($params);
+	    var_dump($result);
+	} catch (AwsException $e) {
+	    // output error message if fails
+	    error_log($e->getMessage());
+	}
 }
 
 function sendToBucket($fileName, $sImage, $S3) {
