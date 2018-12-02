@@ -1,6 +1,20 @@
 #!/bin/bash
 DB_ID_READ=replica-db
 
+while [ -n "$1" ]
+do
+	case "$1" in
+		"--db-replica-id")
+		DB_ID_READ="$2"
+		shift 2
+		;;
+	*)
+		echo "$1 is not a valid argument."
+		exit
+		;;
+  esac
+done
+
 echo "====DESTROY MP3===="
 
 echo -n "Delete auto scaling group... "
