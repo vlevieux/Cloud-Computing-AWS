@@ -87,7 +87,7 @@ function runimgprocessing($RDS,$S3,$sns,$filename)
         $servername = $result['DBInstances'][0]['Endpoint']['Address'];
         $username = $result['DBInstances'][0]['MasterUsername'];
         $dbname = $result['DBInstances'][0]['DBName'];
-        $password = "admin1234";
+        $password = "test1234";
         $dsn="mysql:host={$servername};port=3306;dbname={$dbname}";
         try {
                 $conn = new PDO($dsn, $username, $password);
@@ -257,7 +257,7 @@ function imgman($filename,$receipt,$bucket_name,$RDS,$S3)
     $servername = $result['DBInstances'][0]['Endpoint']['Address'];
     $username = $result['DBInstances'][0]['MasterUsername'];
     $dbname = $result['DBInstances'][0]['DBName'];
-    $password = "admin1234";
+    $password = "test1234";
     $dsn="mysql:host={$servername};port=3306;dbname={$dbname}";
     try {
         $conn = new PDO($dsn, $username, $password);
