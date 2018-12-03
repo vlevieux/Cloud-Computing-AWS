@@ -194,15 +194,15 @@ function imgman($filename,$receipt,$bucket_name,$RDS,$S3)
 
     $tmp_file_post_name = "{$postkey}-updated.{$extension}";
 
-    $img_path_needs_process = "/home/ubuntu/fandrieux/ITMO544/mp2/{$keyname}";
+    $img_path_needs_process = "/home/ubuntu/vlevieux/itmd-544/MP2/{$keyname}";
 
-    $full_file_location_and_name = "/home/ubuntu/fandrieux/ITMO544/mp2/{$tmp_file_post_name}";
+    $full_file_location_and_name = "/home/ubuntu/vlevieux/itmd-544/MP2/{$tmp_file_post_name}";
 
 
 
     // Load the stamp and the photo to apply the watermark to
 
-    $stamp = imagecreatefrompng('/home/ubuntu/fandrieux/ITMO544/mp2/watermark.png');
+    $stamp = imagecreatefrompng('/home/ubuntu/vlevieux/itmd-544/MP2/watermark.png');
 
     $im = imagecreatefromjpeg($img_path_needs_process);
 
