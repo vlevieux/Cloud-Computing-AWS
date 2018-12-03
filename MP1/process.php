@@ -6,7 +6,6 @@ use Aws\Sqs\SqsClient;
 use Aws\Sns\SnsClient;
 use Aws\S3\Exception\S3Exception;
 
-$queueUrl = "https://sqs.us-east-1.amazonaws.com/964874203517/inclass-sqs-queue";
 
 //New S3 Client
 $S3 = new Aws\S3\S3Client([
@@ -30,35 +29,40 @@ $sns = new Aws\Sns\SnsClient([
     'region' => 'us-east-1',
     'version' => 'latest'
 ]);
+set_time_limit(0);
+ignore_user_abort(1);
+while(1)
+{
+	try {
+		$queueUrl = $client->getQueueUrl([
+        		'QueueName' => $queueName // REQUIRED
+    		]);
+    		$result = $SQS->receiveMessage(array(
+        	'AttributeNames' => ['SentTimestamp'],
+        	'MaxNumberOfMessages' => 1,
+        	'MessageAttributeNames' => ['All'],
+        	'QueueUrl' => $queueUrl, // REQUIRED
+        	'WaitTimeSeconds' => 0,
+    	));
+    	if (count($result->get('Messages')) > 0) {
+            	$filename=$result->get('Messages')[0]['Body'];
+            	runimgprocessing($RDS, $S3, $filename);
+            	$done=1;
+    	} else {
+            	echo "No messages in queue. \n";
+   	}
+	} catch (AwsException $e) {
+    		// output error message if fails
+    		error_log($e->getMessage());
+	}
 
-try {
-    $result = $SQS->receiveMessage(array(
-        'AttributeNames' => ['SentTimestamp'],
-        'MaxNumberOfMessages' => 1,
-        'MessageAttributeNames' => ['All'],
-        'QueueUrl' => $queueUrl, // REQUIRED
-        'WaitTimeSeconds' => 0,
-    ));
-    if (count($result->get('Messages')) > 0) {
-            $filename=$result->get('Messages')[0]['Body'];
-            runimgprocessing($RDS, $S3, $filename);
-            $done=1;
-    } else {
-            echo "No messages in queue. \n";
-    }
-} catch (AwsException $e) {
-    // output error message if fails
-    error_log($e->getMessage());
-}
+	if ($done==1) {
 
-if ($done==1) {
-
-    $donemsg = "done processing";
-
-    sendsms($sns,$donemsg);
-
-    $done = 0;
-
+    		$donemsg = "done processing";
+    		sendsms($sns,$donemsg);
+    		$done = 0;
+	}
+	sleep(30);
 }
 
 function sendsms($sns,$message)
@@ -83,7 +87,7 @@ function runimgprocessing($RDS,$S3,$sns,$filename)
         $servername = $result['DBInstances'][0]['Endpoint']['Address'];
         $username = $result['DBInstances'][0]['MasterUsername'];
         $dbname = $result['DBInstances'][0]['DBName'];
-        $password = "test1234";
+        $password = "admin1234";
         $dsn="mysql:host={$servername};port=3306;dbname={$dbname}";
         try {
                 $conn = new PDO($dsn, $username, $password);
@@ -253,7 +257,7 @@ function imgman($filename,$receipt,$bucket_name,$RDS,$S3)
     $servername = $result['DBInstances'][0]['Endpoint']['Address'];
     $username = $result['DBInstances'][0]['MasterUsername'];
     $dbname = $result['DBInstances'][0]['DBName'];
-    $password = "test1234";
+    $password = "admin1234";
     $dsn="mysql:host={$servername};port=3306;dbname={$dbname}";
     try {
         $conn = new PDO($dsn, $username, $password);
