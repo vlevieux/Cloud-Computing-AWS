@@ -1,4 +1,4 @@
-<?phpi
+<?php
 require '/home/ubuntu/vendor/autoload.php';
 
 use Aws\S3\S3Client;
@@ -34,23 +34,28 @@ ignore_user_abort(1);
 while(1)
 {
 	try {
-		$queueUrl = $client->getQueueUrl([
-        		'QueueName' => $queueName // REQUIRED
-    		]);
+		$queueUrltest = $SQS->listQueues([]);
+		$queueUrl = $queueUrltest['QueueUrls'][0];
     		$result = $SQS->receiveMessage(array(
-        	'AttributeNames' => ['SentTimestamp'],
-        	'MaxNumberOfMessages' => 1,
-        	'MessageAttributeNames' => ['All'],
+        	//'AttributeNames' => ['SentTimestamp'],
+        	//'MaxNumberOfMessages' => 1,
         	'QueueUrl' => $queueUrl, // REQUIRED
+		'MaxNumberOfMessages'=>1,
         	'WaitTimeSeconds' => 0,
     	));
-    	if (count($result->get('Messages')) > 0) {
-            	$filename=$result->get('Messages')[0]['Body'];
-            	runimgprocessing($RDS, $S3, $filename);
-            	$done=1;
-    	} else {
-            	echo "No messages in queue. \n";
-   	}
+    	if (empty($result->get('Messages'))) {
+                echo "No messages in queue. \n";
+        }
+	else{
+                $filename=$result->get('Messages')[0]['Body'];
+		echo "";
+		echo "Run image processing";
+		echo "";
+		runimgprocessing($RDS, $S3, $sns, $filename);
+		$done=1;
+		echo "";
+		echo "done";
+	}
 	} catch (AwsException $e) {
     		// output error message if fails
     		error_log($e->getMessage());
@@ -83,6 +88,7 @@ function sendsms($sns,$message)
 function runimgprocessing($RDS,$S3,$sns,$filename)
 
 {
+	
         $result = $RDS->describeDBInstances([]);
         $servername = $result['DBInstances'][0]['Endpoint']['Address'];
         $username = $result['DBInstances'][0]['MasterUsername'];
@@ -99,53 +105,43 @@ function runimgprocessing($RDS,$S3,$sns,$filename)
         {
                 echo "Connection failed: " . $e->getMessage();
         }
+	
+	try {
 
+        $sql = $conn->prepare("SELECT * FROM Image_Processing ");
 
-        $sql = "SELECT * FROM Image_Processing WHERE job_status='0'";
+	$sql->execute();
+	$message = "Images being processed";
+	
+        sendsms($sns,$message);
+        while ($row = $sql->fetch(PDO::FETCH_ASSOC)) {
+		$s3_list_bucket = $S3->listBuckets([]);
+                $s3_bucket_name = $s3_list_bucket['Buckets'][0]['Name'];
+  		echo $s3_bucket_name;
+		$arn=$sns->listTopics([]);
+                $arn= $arn['Topics'][0]['TopicArn'];
+                /*$sub = $client->subscribe(array(
+                	// TopicArn is required
+                	'TopicArn' => $arn,
+                	// Protocol is required
+                	'Protocol' => 'sms',
+                	'Endpoint' => $row['phone'],
+		));*/
 
-        if ($result = $con->exec($sql)) {
-                if ( $result->rowCount() > 0) {
-                        $message = "Images being processed";
+                //used for uploading where condition
+                $receipt = $row['uuid_receipt'];
+                $s3_raw_url = $row['s3_raw_url'];
 
-                        sendsms($message);
+                //calls get object function
+		
+                getobj($s3_bucket_name, $filename, $s3_raw_url, $S3);
+				
+                //calls image manipulation and upload to s3 and update db
 
-                        while ($row = $result->rowCount()) {
-
-                                $s3_list_bucket = $S3->listBuckets([]);
-                                $s3_bucket_name = $s3_list_bucket['Buckets'][0]['Name'];
-
-                                $arn=$sns->listTopics([]);
-                                $arn= $arn['Topics'][0]['TopicArn'];
-
-                                $sub = $client->subscribe(array(
-                                // TopicArn is required
-                                'TopicArn' => $arn
-                                // Protocol is required
-                                'Protocol' => 'sms',
-                                'Endpoint' => $row['phone'],
-                                ));
-
-                                //used for uploading where condition
-                                $receipt = $row['uuid_receipt']
-
-                                $s3_row_url = $row['s3_raw_url'];
-
-                                 //calls get object function
-
-                                getobj($s3_bucket_name, $s3_row_url, $S3);
-
-                                //calls image manipulation and upload to s3 and update db
-
-                                imgman($filename, $s3_bucket_name, $receipt, $RDS, $S3);
-                        }
-
-                } else {
-
-                        echo "No records matching your query were found.";
-
-                }
-
-        } catch(PDOException $e)
+		
+		imgman($s3_raw_url,$filename, $receipt, $s3_bucket_name, $RDS, $S3);
+	}
+	} catch(PDOException $e)
         {
                 echo "Sql request failed: " . $e->getMessage();
         }
@@ -153,10 +149,11 @@ function runimgprocessing($RDS,$S3,$sns,$filename)
 
 
 
+
 }
 
 
-function getobj($bucket_name, $filepath, $S3)
+function getobj($bucket_name,$filename, $s3_bucket_url, $S3)
 {
 
     try {
@@ -167,7 +164,9 @@ function getobj($bucket_name, $filepath, $S3)
 
             'Bucket' => $bucket_name,
 
-            'ObjectURL' => $s3_bucket_url,
+	    'ObjectURL' => $s3_bucket_url,
+	    
+	    'Key' => $filename
         ));
 
     } catch (S3Exception $e) {
@@ -179,7 +178,7 @@ function getobj($bucket_name, $filepath, $S3)
 }
 
 
-function imgman($filename,$receipt,$bucket_name,$RDS,$S3)
+function imgman($s3_bucket_url,$filename,$receipt,$bucket_name,$RDS,$S3)
 
 {
 
@@ -194,20 +193,21 @@ function imgman($filename,$receipt,$bucket_name,$RDS,$S3)
 
     $tmp_file_post_name = "{$postkey}-updated.{$extension}";
 
-    $img_path_needs_process = "/home/ubuntu/vlevieux/itmd-544/MP2/{$keyname}";
-
-    $full_file_location_and_name = "/home/ubuntu/vlevieux/itmd-544/MP2/{$tmp_file_post_name}";
-
+    //$img_path_needs_process = $s3_bucket_url;
+    //echo $img_path_needs_process; 
 
 
     // Load the stamp and the photo to apply the watermark to
 
-    $stamp = imagecreatefrompng('/home/ubuntu/vlevieux/itmd-544/MP2/watermark.png');
+    $stamp = imagecreatefrompng('watermark.png');   
 
-    $im = imagecreatefromjpeg($img_path_needs_process);
+    $im = imagecreatefrompng($s3_bucket_url);
 
-
-
+    imagealphablending($im, true);
+    imagesavealpha($im,true);
+/*    imagecopy($stamp,$im,0, 0, 0, 0, 100, 100);
+    imagepng($im,$tmp_file_post_name);
+ */
     // Set the margins for the stamp and get the height/width of the stamp image
 
     $marge_right = 10;
@@ -217,30 +217,31 @@ function imgman($filename,$receipt,$bucket_name,$RDS,$S3)
     $sx = imagesx($stamp);
 
     $sy = imagesy($stamp);
-
-
+ 
+   
 
     // Copy the stamp image onto our photo using the margin offsets and the photo
 
     // width to calculate positioning of the stamp.
 
-    imagecopy($im, $stamp, imagesx($im) - $sx - $marge_right, imagesy($im) - $sy - $marge_bottom, 0, 0, imagesx($stamp), imagesy($stamp));
+    imagecopy($im, $stamp, imagesx($im) - $sx - $marge_right, imagesy($im) - $sy - $marge_bottom, 0, 0, 100, 100);
 
-    imagejpeg($im, $full_file_location_and_name, 100);
-
+    imagepng($im, $tmp_file_post_name, 100);
+ 
 
 
     //Put object in bucket
+    echo $bucket_name;
 
     try {
 
-        $s3Client->putObject([
+        $S3->putObject([
 
-            'Bucket' => 'Bucket_name',
+            'Bucket' => $bucket_name,
 
             'Key' => $tmp_file_post_name,
 
-            'Body' => fopen($full_file_location_and_name, 'rb'),
+            'Body' => fopen($tmp_file_post_name, 'rb'),
 
             'ACL' => 'public-read'
 
@@ -253,7 +254,7 @@ function imgman($filename,$receipt,$bucket_name,$RDS,$S3)
 
     }
 
-    $result = $RDS->describeDBInstances([])
+    $result = $RDS->describeDBInstances([]);
     $servername = $result['DBInstances'][0]['Endpoint']['Address'];
     $username = $result['DBInstances'][0]['MasterUsername'];
     $dbname = $result['DBInstances'][0]['DBName'];
@@ -269,16 +270,20 @@ function imgman($filename,$receipt,$bucket_name,$RDS,$S3)
         include "upload-fail.html";
         exit();
     }
+	$sql = $conn->prepare("SELECT * FROM Image_Processing ");
+
+        $sql->execute();
 
 
     //prepared statement
 	
     $furl = "s3.us-east-1.amazonaws.com/" . $bucket_name . "/" . $tmp_file_post_name;
 
-    $updatesql = "UPDATE Image_Processing set s3_raw_url " . $furl . "', status=1 WHERE receipt='" . $receipt . "'";
+    $updatesql = $conn->prepare("UPDATE Image_Processing set s3_raw_url " . $furl);
 
-    try ($result2 = $conn->exec($updatesql);
+    try
     {
+	$updatesql->execute();
 
         echo "upload successuful";
 
@@ -286,6 +291,7 @@ function imgman($filename,$receipt,$bucket_name,$RDS,$S3)
     {
             echo "Update Sql request failed: " . $e->getMessage();
     }
+    $conn=null;
 
 
 }
