@@ -25,7 +25,7 @@ $RDS = new Aws\Rds\RdsClient([
     'version' => 'latest',
     'region' => 'us-east-1'
 ]);
-
+//New SNS Client
 $sns = new Aws\Sns\SnsClient([
     'region' => 'us-east-1',
     'version' => 'latest'
@@ -190,15 +190,15 @@ function imgman($filename,$receipt,$bucket_name,$RDS,$S3)
 
     $tmp_file_post_name = "{$postkey}-updated.{$extension}";
 
-    $img_path_needs_process = "/home/ubuntu/vlevieux/itmd-544/MP2/{$keyname}";
+    $img_path_needs_process = "/home/ubuntu/fandrieux/ITMO544/mp2/{$keyname}";
 
-    $full_file_location_and_name = "/home/ubuntu/vlevieux/itmd-544/MP2/{$tmp_file_post_name}";
+    $full_file_location_and_name = "/home/ubuntu/fandrieux/ITMO544/mp2/{$tmp_file_post_name}";
 
 
 
     // Load the stamp and the photo to apply the watermark to
 
-    $stamp = imagecreatefrompng('/home/ubuntu/vlevieux/itmd-544/MP2/watermark.png');
+    $stamp = imagecreatefrompng('/home/ubuntu/fandrieux/ITMO544/mp2/watermark.png');
 
     $im = imagecreatefromjpeg($img_path_needs_process);
 
@@ -268,8 +268,8 @@ function imgman($filename,$receipt,$bucket_name,$RDS,$S3)
 
 
     //prepared statement
-
-    $furl = "s3.us-east-1.amazonaws.com/vlevieuxmp21/" . $tmp_file_post_name;
+	
+    $furl = "s3.us-east-1.amazonaws.com/" . $bucket_name . "/" . $tmp_file_post_name;
 
     $updatesql = "UPDATE Image_Processing set s3_raw_url " . $furl . "', status=1 WHERE receipt='" . $receipt . "'";
 
